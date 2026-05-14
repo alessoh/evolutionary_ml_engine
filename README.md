@@ -277,3 +277,10 @@ The Page-Hinkley change-point test was introduced by E. S. Page in 1954 and name
 Shewhart control charts and the Western Electric runs rules were developed at Bell Laboratories in the 1920s and 1930s and codified in the Western Electric Statistical Quality Control Handbook in 1956. They remain the foundation of industrial quality control.
 
 The combination of all four into an autonomous machine learning system is the contribution of this reference implementation. None of the parts are novel; the architecture is the contribution.
+
+## Contact
+
+Email: h.alesso@comcast.net
+GitHub: https://github.com/alessoh
+
+
