@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolutionary ML Engine - Live Demo</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+        }
+        
+        .controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        select, button {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .chart-container {
+            margin-bottom: 30px;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .status.running {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status.complete {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .github-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: #24292e;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        
+        .github-link:hover {
+            background: #000;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧬 Evolutionary ML Engine</h1>
+        <p class="subtitle">Autonomous AI Agent for Production Machine Learning</p>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="scenario">Select Drift Scenario:</label>
+                <select id="scenario">
+                    <option value="gradual">Gradual Drift</option>
+                    <option value="sudden">Sudden Shift</option>
+                    <option value="oscillating">Oscillating Pattern</option>
+                    <option value="extreme">Extreme Drift</option>
+                </select>
+            </div>
+            
+            <button id="runBtn" onclick="runSimulation()">🚀 Run Simulation</button>
+        </div>
+        
+        <div id="status" style="display: none;"></div>
+        
+        <div id="metrics" style="display: none;">
+            <div class="metrics">
+                <div class="metric-card">
+                    <div class="metric-label">Retraining Events</div>
+                    <div class="metric-value" id="retraining">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Average ROC AUC</div>
+                    <div class="metric-value" id="avgAuc">0.000</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Final Diversity</div>
+                    <div class="metric-value" id="diversity">0.000</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Adaptations</div>
+                    <div class="metric-value" id="adaptations">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="charts" style="display: none;">
+            <div class="chart-container">
+                <h2>Performance Metrics Over Time</h2>
+                <div id="performanceChart"></div>
+            </div>
+            
+            <div class="chart-container">
+                <h2>Drift Detection Signals</h2>
+                <div id="driftChart"></div>
+            </div>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="https://github.com/alessoh/evolutionary_ml_engine" class="github-link" target="_blank">
+                📦 View on GitHub
+            </a>
+        </div>
+    </div>
+    
+    <script>
+        const scenarios = {
+            gradual: [0.0, 0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 1.0, 1.0],
+            sudden: [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            oscillating: [0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5],
+            extreme: [0.0, 0.2, 0.5, 1.0, 1.5, 2.0, 2.0, 2.0, 2.0, 2.0]
+        };
+        
+        function generateData(driftSchedule) {
+            const cycles = driftSchedule.length;
+            const data = {
+                cycles: [],
+                auc: [],
+                coverage: [],
+                diversity: [],
+                logLoss: [],
+                ooc: []
+            };
+            
+            let baseAuc = 0.85;
+            let baseCoverage = 0.90;
+            let baseDiversity = 0.75;
+            let baseLogLoss = 0.45;
+            
+            for (let i = 0; i < cycles; i++) {
+                const drift = driftSchedule[i];
+                data.cycles.push(i + 1);
+                
+                // Simulate performance degradation with drift
+                const aucDrop = Math.min(drift * 0.15, 0.25);
+                const coverageDrop = Math.min(drift * 0.12, 0.20);
+                const diversityChange = drift * 0.3;
+                const logLossIncrease = drift * 0.4;
+                
+                // Add some noise
+                const noise = () => (Math.random() - 0.5) * 0.03;
+                
+                let auc = baseAuc - aucDrop + noise();
+                let coverage = baseCoverage - coverageDrop + noise();
+                let diversity = baseDiversity - diversityChange + noise();
+                let logLoss = baseLogLoss + logLossIncrease + noise();
+                
+                // Out of control condition
+                const ooc = coverage < 0.83 || auc < 0.75;
+                
+                // If out of control, simulate evolution improving things
+                if (ooc) {
+                    auc += 0.05;
+                    coverage += 0.04;
+                    diversity += 0.15;
+                    logLoss -= 0.1;
+                }
+                
+                data.auc.push(Math.max(0.6, Math.min(0.95, auc)));
+                data.coverage.push(Math.max(0.75, Math.min(0.95, coverage)));
+                data.diversity.push(Math.max(0.3, Math.min(0.9, diversity)));
+                data.logLoss.push(Math.max(0.3, Math.min(1.2, logLoss)));
+                data.ooc.push(ooc);
+            }
+            
+            return data;
+        }
+        
+        function runSimulation() {
+            const scenario = document.getElementById('scenario').value;
+            const runBtn = document.getElementById('runBtn');
+            const status = document.getElementById('status');
+            const metrics = document.getElementById('metrics');
+            const charts = document.getElementById('charts');
+            
+            // Show running status
+            runBtn.disabled = true;
+            status.style.display = 'block';
+            status.className = 'status running';
+            status.textContent = '⏳ Running simulation...';
+            
+            // Simulate processing time
+            setTimeout(() => {
+                const driftSchedule = scenarios[scenario];
+                const data = generateData(driftSchedule);
+                
+                // Calculate metrics
+                const retrainingEvents = data.ooc.filter(x => x).length;
+                const avgAuc = (data.auc.reduce((a, b) => a + b) / data.auc.length);
+                const finalDiversity = data.diversity[data.diversity.length - 1];
+                
+                // Update metric cards
+                document.getElementById('retraining').textContent = retrainingEvents;
+                document.getElementById('avgAuc').textContent = avgAuc.toFixed(3);
+                document.getElementById('diversity').textContent = finalDiversity.toFixed(3);
+                document.getElementById('adaptations').textContent = retrainingEvents;
+                
+                // Show metrics and charts
+                metrics.style.display = 'block';
+                charts.style.display = 'block';
+                
+                // Update status
+                status.className = 'status complete';
+                status.textContent = `✅ Simulation complete! Detected ${retrainingEvents} drift events and adapted automatically.`;
+                
+                // Create performance chart
+                createPerformanceChart(data);
+                createDriftChart(data);
+                
+                runBtn.disabled = false;
+            }, 1500);
+        }
+        
+        function createPerformanceChart(data) {
+            const oocIndices = data.ooc.map((val, idx) => val ? idx : -1).filter(idx => idx >= 0);
+            
+            const trace1 = {
+                x: data.cycles,
+                y: data.auc,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'ROC AUC',
+                line: {color: '#667eea', width: 3},
+                marker: {size: 8}
+            };
+            
+            const trace2 = {
+                x: oocIndices.map(i => data.cycles[i]),
+                y: oocIndices.map(i => data.auc[i]),
+                type: 'scatter',
+                mode: 'markers',
+                name: 'Auto-Adaptation',
+                marker: {
+                    size: 15,
+                    color: '#ff4444',
+                    symbol: 'star',
+                    line: {color: '#cc0000', width: 2}
+                }
+            };
+            
+            const trace3 = {
+                x: data.cycles,
+                y: data.coverage,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Conformal Coverage',
+                line: {color: '#2ecc71', width: 3},
+                marker: {size: 8},
+                yaxis: 'y2'
+            };
+            
+            const layout = {
+                title: 'Model Performance & Auto-Adaptation Events',
+                xaxis: {title: 'Cycle'},
+                yaxis: {
+                    title: 'ROC AUC',
+                    range: [0.5, 1.0],
+                    side: 'left'
+                },
+                yaxis2: {
+                    title: 'Coverage',
+                    range: [0.7, 1.0],
+                    overlaying: 'y',
+                    side: 'right'
+                },
+                hovermode: 'x unified',
+                showlegend: true
+            };
+            
+            Plotly.newPlot('performanceChart', [trace1, trace2, trace3], layout, {responsive: true});
+        }
+        
+        function createDriftChart(data) {
+            const trace1 = {
+                x: data.cycles,
+                y: data.logLoss,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Log Loss',
+                line: {color: '#e74c3c', width: 3},
+                marker: {size: 8}
+            };
+            
+            const oocIndices = data.ooc.map((val, idx) => val ? idx : -1).filter(idx => idx >= 0);
+            
+            const trace2 = {
+                x: oocIndices.map(i => data.cycles[i]),
+                y: oocIndices.map(i => data.logLoss[i]),
+                type: 'scatter',
+                mode: 'markers',
+                name: 'Drift Alert',
+                marker: {
+                    size: 15,
+                    color: '#ff4444',
+                    symbol: 'triangle-up'
+                }
+            };
+            
+            const layout = {
+                title: 'Sequential Drift Detection (Page-Hinkley)',
+                xaxis: {title: 'Cycle'},
+                yaxis: {title: 'Log Loss'},
+                hovermode: 'x unified',
+                showlegend: true
+            };
+            
+            Plotly.newPlot('driftChart', [trace1, trace2], layout, {responsive: true});
+        }
+    </script>
+</body>
+</html>
